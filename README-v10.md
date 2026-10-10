@@ -123,3 +123,42 @@ MAVLink PING source was noted, but this change intentionally does not tune
 search ranking to that additional evaluation set. Neither score measures
 answer correctness. Do not repeatedly tune evaluation questions into an
 illusory held-out benchmark. Existing source-rights review requirements apply.
+
+## v1.0.3 — optional neural continuation alongside source-backed evidence
+
+The new `answer-neural` command **connects the original locally trained SkyGrid
+Transformer to document retrieval** without claiming its output is trustworthy
+aviation advice. It first uses the existing `answer` source-verification path,
+then prepares a context-bounded prompt containing the question and the best
+citation-backed excerpt. The model generates a **separate, unverified draft**;
+the citation applies only to the original excerpt, **not** to neural words.
+
+After a single pull, using the step-5,000 **v0.9c** checkpoint already on your PC:
+
+```bash
+git pull origin main
+python -m unittest discover -s tests -v
+python -m src.skygrid_ai.knowledge.cli answer-neural "What does MAVLink HEARTBEAT do?" --model v09c --checkpoint last --tokens 64
+python -m src.skygrid_ai.knowledge.cli answer-neural "How does PX4 handle control allocation?" --model v09c --checkpoint last --tokens 64
+python -m src.skygrid_ai.knowledge.cli answer-neural "How does MAVLink perform control allocation?"
+```
+
+The last query should return `source_mismatch` **without generating a neural
+draft**. The default is v09c/last because step 5,000 performed marginally
+better than step 4,900 on the complete validation set; the original test
+result remains frozen. You may select `--checkpoint best` to compare locally.
+
+To experiment with the optional larger **v10** architecture *after actually
+training it*, use `--model v10`. If `checkpoints/v10/last.pt` has not been
+created on your PC, the command raises a clear missing-checkpoint error. The
+existing checkpoint formats, binary-dataset hashes and custom tokenizer
+fingerprint are validated before generating; PyTorch loads weights-only.
+
+This is **not yet a true instruction-following or evidence-entailing aviation
+assistant**. It is a controlled integration experiment: a 406k-parameter
+next-token predictor trained on documentation generally cannot understand
+questions or reliably synthesize source-grounded answers. The source excerpt
+remains the only reference-backed material and also requires human judgment
+for safety-critical applications. The neural preview must not control UAVs or
+be used for real-world flight decisions. No model files, source data, token
+files, or retrieval indexes are modified by this command.
