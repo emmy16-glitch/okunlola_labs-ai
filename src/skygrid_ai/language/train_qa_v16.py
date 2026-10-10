@@ -115,7 +115,7 @@ def fit(rows, tok, source, source_hash, qa_hash, *, output=OUTPUT, steps=100,
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
-        if step == 1 or step % eval_every == 0 or step == steps:
+        if step == 1 or step % eval_every == 0:
             val_loss, targets = evaluate_v16(model, rows['val'], tok, context)
             print(f'step {step:5d} | train_answer_loss={float(loss.detach()):.4f} '
                   f'| val_answer_loss={val_loss:.4f} | val_targets={targets}', flush=True)

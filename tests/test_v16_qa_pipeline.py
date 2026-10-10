@@ -115,6 +115,21 @@ class TestQA16(unittest.TestCase):
                 fit(self.rows,self.tok,self.source,'source','data',output=td,
                     steps=6,eval_every=1,patience=1,min_delta=1000,min_train=1,batch_size=1,resume=True)
 
+    def test_resume_matches_uninterrupted_at_non_evaluation_boundary(self):
+        with tempfile.TemporaryDirectory() as td:
+            direct, resume = Path(td)/'direct', Path(td)/'resume'
+            settings = dict(steps=6, eval_every=2, patience=50, min_train=1, batch_size=1)
+            fit(self.rows,self.tok,self.source,'source','data',output=direct,**settings)
+            fit(self.rows,self.tok,self.source,'source','data',output=resume,
+                **{**settings,'steps':3})
+            fit(self.rows,self.tok,self.source,'source','data',output=resume,
+                resume=True,**settings)
+            a=torch.load(direct/'last.pt',weights_only=True)
+            b=torch.load(resume/'last.pt',weights_only=True)
+            self.assertEqual(a['best_step'],b['best_step'])
+            for key in a['model_state']:
+                self.assertTrue(torch.equal(a['model_state'][key],b['model_state'][key]))
+
     def test_unfinished_manual_review_cannot_be_scored(self):
         report={'model_sha256':'sha','split':'val','items':[{'id':'a'}]}
         form=human_review_template(report)
