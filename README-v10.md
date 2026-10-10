@@ -52,3 +52,15 @@ Use your `checkpoints/v09d/val_last_step5000.json` and `test_last_step5000.json`
 - The 9 regression questions are not a large independent knowledge exam, and source-term matching is **not answer accuracy**.
 - Existing dataset license metadata still flags `rights_review_required`: a flag acknowledgement cannot substitute for license and embedded-content review.
 - All artifacts created on your machine under `data/aviation/index_v10/` and `checkpoints/` should remain ignored by Git.
+
+## Retrieval ranking refinement
+
+Search ranking now combines BM25 body matches with an editorial-filename topic
+boost, and returns at most two passages per document in each result set. This
+works with existing `passages.json.gz` indexes; **do not rebuild your index**.
+Run `python -m src.skygrid_ai.knowledge.cli benchmark` again after pulling.
+The initial 9-question benchmark scored 7/9 source recall; because those
+misses motivated this change, improvement on these same questions would be
+**development-set progress, not proof of generalization**. Evaluate new,
+independently written questions as well. No generated claims are fact-checked
+by this retrieval score.

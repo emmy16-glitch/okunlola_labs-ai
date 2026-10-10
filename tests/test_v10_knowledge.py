@@ -27,6 +27,38 @@ class TestV10Knowledge(unittest.TestCase):
         self.assertEqual(a[0]['id'], 'a')
         self.assertTrue(a[0]['url'].startswith('https://'))
 
+    def test_topic_filename_relevance_is_general_not_a_source_override(self):
+        # Distractors repeat generic query terms, but the authoritative topic
+        # is identified by its own filename and has real matching text.
+        passages = [
+            {'id': f'd{i}', 'source': 'docs', 'path': f'other_{i}.md',
+             'url': f'https://example.org/other_{i}',
+             'text': 'aircraft tracking navigation system data ' * 5}
+            for i in range(7)
+        ]
+        passages.append({
+            'id': 'topic', 'source': 'docs', 'path': 'manual/signal.md',
+            'url': 'https://example.org/signal',
+            'text': 'Signal configuration is documented here for aircraft.',
+        })
+        matches = SearchIndex(passages).search('aircraft tracking signal navigation system', limit=3)
+        self.assertIn('topic', [item['id'] for item in matches])
+
+    def test_document_diversity_and_body_evidence_required(self):
+        rows = [
+            {'id': f'a:{i}', 'source': 'docs', 'path': 'guide/topic.md',
+             'url': 'https://example.org/topic', 'text': 'topic sensor calibration details ' * 3}
+            for i in range(6)
+        ]
+        rows.append({'id': 'b:0', 'source': 'docs', 'path': 'guide/sensor.md',
+                     'url': 'https://example.org/sensor', 'text': 'sensor calibration explanation'})
+        rows.append({'id': 'c:0', 'source': 'docs', 'path': 'guide/other.md',
+                     'url': 'https://example.org/other', 'text': 'entirely unrelated material'})
+        matches = SearchIndex(rows).search('topic sensor calibration', limit=5)
+        self.assertLessEqual(sum(x['path'] == 'guide/topic.md' for x in matches), 2)
+        self.assertIn('b:0', [x['id'] for x in matches])
+        self.assertNotIn('c:0', [x['id'] for x in matches])
+
     def test_no_evidence_abstains(self):
         self.assertEqual(self.sample().evidence('quasar pineapple orbit')['status'], 'abstained')
 

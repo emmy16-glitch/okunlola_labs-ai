@@ -96,23 +96,54 @@ class SearchIndex:
         self.lengths = lengths
 
     def search(self, query, limit=5):
+        """Rank passage evidence with BM25, filename relevance and diversity.
+
+        Filenames describe document topics in the indexed documentation. A
+        moderate filename boost helps a precise topic page compete with pages
+        that repeatedly mention broader query terms. A document may occupy
+        at most two result slots to keep top-k evidence useful.
+
+        The corpus index format is unchanged, so old on-disk indexes work.
+        """
         if limit < 1:
             raise ValueError('limit must be positive')
         tokens = set(words(query))
         if not tokens or not self.passages:
             return []
         scores = defaultdict(float)
+        idfs = {}
         N = len(self.passages)
         for term in tokens:
             matches = self.postings.get(term, [])
             if not matches:
                 continue
             idf = math.log(1 + (N - len(matches) + 0.5) / (len(matches) + 0.5))
+            idfs[term] = idf
             for doc_id, frequency in matches:
                 denominator = frequency + 1.5 * (0.25 + 0.75 * self.lengths[doc_id] / max(self.avglen, 1))
                 scores[doc_id] += idf * frequency * 2.5 / denominator
-        ranked = sorted(scores, key=lambda i: (-scores[i], self.passages[i]['id']))[:limit]
-        return [{**self.passages[i], 'score': round(scores[i], 4)} for i in ranked]
+
+        for doc_id in scores:
+            filename = Path(self.passages[doc_id]['path']).stem
+            filename_terms = set(words(re.sub(r'[_-]+', ' ', filename)))
+            # Filename is an editorial topic label, not a substitute for body
+            # evidence. Only passages with actual BM25 text matches qualify.
+            scores[doc_id] += 2.5 * sum(
+                idfs[t] for t in (tokens & filename_terms) if t in idfs
+            )
+
+        ranked = sorted(scores, key=lambda i: (-scores[i], self.passages[i]['id']))
+        selected = []
+        per_document = Counter()
+        for i in ranked:
+            document_key = (self.passages[i]['source'], self.passages[i]['path'])
+            if per_document[document_key] >= 2:
+                continue
+            selected.append(i)
+            per_document[document_key] += 1
+            if len(selected) == limit:
+                break
+        return [{**self.passages[i], 'score': round(scores[i], 4)} for i in selected]
 
     def evidence(self, question, limit=3, minimum_score=1.0):
         """Returns source excerpts, NOT an AI-authored factual answer."""
