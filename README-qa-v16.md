@@ -102,3 +102,39 @@ python -m src.skygrid_ai.language.evaluate_qa_v16 --split test --checkpoint best
 - Differences in validation answer-token loss do not prove factual generalization. Human grading of drafts and refusal scenarios remains necessary.
 - Keep all local review files, train/val/test assignments and reports private under `data/qa/` and `checkpoints/`. The new candidate/review files are ignored by Git.
 - No real UAV or safety-critical action should depend on these experimental neural drafts.
+
+## v1.7: Review the existing 816 candidates without editing JSON by hand
+
+Your output of `candidates_created: 816`, `reviewed_approved: 0`, and a training
+failure requiring 100 approved examples is **expected**. Do **not** regenerate
+candidate data or pass review flags as a substitute for actual review. The
+original source v10 checkpoint remains unchanged. The new interactive helper
+uses the same question-only retrieval gate as training to **skip** candidates
+whose cited document cannot be recovered; it never certifies factual correctness.
+
+```bash
+python -m src.skygrid_ai.language.review_qa_v16 --status
+python -m src.skygrid_ai.language.review_qa_v16 --reviewer "Your Name" --split train --limit 15
+python -m src.skygrid_ai.language.review_qa_v16 --reviewer "Your Name" --split val --limit 10
+python -m src.skygrid_ai.language.review_qa_v16 --reviewer "Your Name" --split test --limit 10
+python -m src.skygrid_ai.language.train_qa_v16 --audit
+```
+
+At each candidate the helper shows the question, **unreviewed** answer, source
+URL, and the current question-only retrieved excerpt. Independently open and
+inspect the source document before approving; the excerpt alone is not
+proof. Choose `a` to approve **only after** affirming source, question, and
+answer checks, `r` to reject a wrong or unclear candidate, `s` to skip
+without saving a decision, or `q` to quit. All explicit decisions save to the
+existing ignored `reviews_v16.json` with an additional `.bak` backup.
+Run the command again to continue from pending candidates. The original
+candidate file and its review-binding SHA are unchanged.
+
+`--status` counts human decisions; `--audit` additionally checks which
+approved rows **actually** pass the live retriever and the split minimums.
+After at least 100 genuinely reviewed, retrieval-supported rows, including
+at least 8 in each of the `train`, `val`, and `test` splits, and source rights
+review, then run the **previously documented** `train_qa_v16` command. The
+helper cannot approve sources on behalf of the user and cannot guarantee
+truth or license clearance. Avoid inspecting final test model outputs during
+development, and never use experimental neural drafts as flight guidance.
