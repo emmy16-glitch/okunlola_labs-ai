@@ -1,0 +1,24 @@
+
+Flight is the movement of an aircraft through the air. Engineers describe flight using forces, motion, and energy.
+
+Lift acts approximately perpendicular to the relative airflow. Wing shape and angle of attack influence lift.
+
+Drag opposes motion through air. The amount of drag depends on factors such as speed and aircraft shape.
+
+Thrust is produced by propulsion systems. A propeller accelerates air and produces a reaction force.
+
+Gravity pulls an aircraft toward Earth. Aircraft must manage the effects of weight throughout a flight.
+
+Pitch describes rotation about the aircraft lateral axis. Pitch changes the orientation of the nose.
+
+Roll describes rotation about the longitudinal axis. Roll changes the aircraft bank angle.
+
+Yaw describes rotation about the vertical axis. Yaw changes the direction the nose points.
+
+An inertial measurement unit can measure angular motion and acceleration. These readings can drift over time.
+
+A flight controller uses sensor measurements to estimate vehicle state. Its control algorithms respond to disturbances.
+
+A ground control station displays flight information to an operator. It may support mission planning and log inspection.
+
+Telemetry is information transmitted from an aircraft to another system. It may include position and battery measurements.
