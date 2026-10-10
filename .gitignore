@@ -5,3 +5,5 @@ __pycache__/
 checkpoints/
 data/raw/
 data/synthetic/*.csv
+data/aviation/processed/
+data/aviation/source/
