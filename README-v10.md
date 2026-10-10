@@ -162,3 +162,60 @@ remains the only reference-backed material and also requires human judgment
 for safety-critical applications. The neural preview must not control UAVs or
 be used for real-world flight decisions. No model files, source data, token
 files, or retrieval indexes are modified by this command.
+
+## v1.0.4 — reproducible CPU training and frozen-baseline comparison
+
+Your earlier `answer-neural` experiment succeeded technically, but the
+v0.9c model's neural continuation was incoherent. That is expected from a
+406,176-parameter documentation next-token predictor, **not** evidence of
+aviation question-answering ability. The cited **extractive** response is
+still the useful output. The larger v10 model must be **trained locally from
+random weights**; merely downloading code cannot train it.
+
+The new `compare_v10` tool evaluates the entire existing **validation** split
+using the same protocol as the v0.9d report, checks the actual checkpoint
+hashes, tokenizer fingerprints and training/validation token-file hashes, and
+compares results against the frozen step-5,000 v0.9c baseline. It never reads
+the held-out test set or modifies any `.pt` file. A completed result is reused
+only if its checkpoint digest and evaluation metadata still match. Results live
+under ignored `checkpoints/v10_evaluation/`.
+
+Run in Git Bash from the repository root:
+
+```bash
+ git pull origin main
+ source .venv/Scripts/activate
+ python -m unittest discover -s tests -v
+```
+
+After completing the **actual source-rights, embedded-content and attribution
+review**, start a conservative local smoke test of the new model:
+
+```bash
+ python -m src.skygrid_ai.language.train_v10 --steps 20 --confirm-rights-reviewed
+ python -m src.skygrid_ai.language.compare_v10 --checkpoint last
+```
+
+If it succeeds and CPU/memory behavior is acceptable, continue **cumulatively**
+to step 1,000 and re-evaluate:
+
+```bash
+ python -m src.skygrid_ai.language.train_v10 --resume --steps 1000 --confirm-rights-reviewed
+ python -m src.skygrid_ai.language.compare_v10 --checkpoint last
+ python -m src.skygrid_ai.language.generate_v10 --prompt "Aircraft telemetry" --checkpoint last --tokens 80
+```
+
+You can also try `answer-neural ... --model v10 --checkpoint last` after the
+model is trained; all neural words remain experimental and unverified. If
+step 1,000 performs worse than v0.9c step 5,000, that does not prove the
+larger architecture is inferior: it has had fewer optimization steps. Report
+full validation numbers, training steps, and a few representative outputs
+before deciding whether to train longer. The earlier **124-document test**
+result must stay frozen; use an entirely new independently held-out dataset
+for any eventual final generalization test.
+
+Training requires your ignored `data/aviation/tokenized_v09b/` files and
+existing `checkpoints/v09c/last.pt` and v0.9d validation report, all local to
+your PC. GitHub does not have those files; no hosted training is implied. CPU
+training on a 16-GB machine may be slow; checkpoints are saved regularly, and
+the resume command continues rather than restarting.
