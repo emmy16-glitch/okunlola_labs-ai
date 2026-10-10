@@ -7,3 +7,4 @@ data/raw/
 data/synthetic/*.csv
 data/aviation/processed/
 data/aviation/source/
+data/aviation/processed_v07/

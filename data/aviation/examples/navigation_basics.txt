@@ -1,0 +1,6 @@
+
+Aircraft navigation involves determining position, direction, and movement along a planned route.
+
+Ground speed describes the speed of an aircraft relative to the ground. Airspeed describes speed relative to the surrounding air.
+
+Wind can cause the aircraft ground track to differ from its heading. Navigation systems may combine satellite positioning, inertial sensors, and other measurements.

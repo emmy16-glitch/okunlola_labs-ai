@@ -1,0 +1,18 @@
+
+[
+  {
+    "filename": "intro_to_flight.txt",
+    "source": "SkyGrid AI tutorial example",
+    "rights_status": "tutorial_demo"
+  },
+  {
+    "filename": "navigation_basics.txt",
+    "source": "SkyGrid AI tutorial example",
+    "rights_status": "tutorial_demo"
+  },
+  {
+    "filename": "telemetry_basics.txt",
+    "source": "SkyGrid AI tutorial example",
+    "rights_status": "tutorial_demo"
+  }
+]

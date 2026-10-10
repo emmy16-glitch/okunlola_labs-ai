@@ -1,0 +1,6 @@
+
+Telemetry systems transfer measurements and status information between an aircraft and a ground station.
+
+A ground control station may display aircraft position, battery measurements, altitude, speed, sensor health, and communication status.
+
+Operators should interpret telemetry in context. A measurement alone may not establish whether an aircraft has a fault. Sensor reliability, aircraft configuration, and recent operating conditions also matter.
