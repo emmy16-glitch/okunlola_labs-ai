@@ -10,7 +10,7 @@ from pathlib import Path
 from .grounded import answer_from_evidence
 from .retrieval import CORPUS, ROOT
 
-VALID_MODELS = {'v09c', 'v10', 'qa_v15'}
+VALID_MODELS = {'v09c', 'v10', 'qa_v15', 'qa_v16'}
 VALID_CHECKPOINTS = {'last', 'best'}
 
 
@@ -49,7 +49,7 @@ def load_local_model_assets(*, model_version='v09c', checkpoint_name='last',
                             root=ROOT):
     """Load only local, compatible SkyGrid checkpoints with safe torch.load."""
     if model_version not in VALID_MODELS or checkpoint_name not in VALID_CHECKPOINTS:
-        raise ValueError('Choose model v09c/v10/qa_v15 and checkpoint best/last')
+        raise ValueError('Choose model v09c/v10/qa_v15/qa_v16 and checkpoint best/last')
     import torch
     from src.skygrid_ai.language.large_bpe import LargeByteBPE
     from src.skygrid_ai.language.train_large_transformer import sha256_file
@@ -64,9 +64,21 @@ def load_local_model_assets(*, model_version='v09c', checkpoint_name='last',
         )
     tokenizer = LargeByteBPE.load(tokenizer_file)
     checkpoint = torch.load(ckpt_file, map_location='cpu', weights_only=True)
-    expected_format = 'skygrid_qa_v15_1' if model_version == 'qa_v15' else 'skygrid_v09c_1'
+    expected_format = {'qa_v15': 'skygrid_qa_v15_1', 'qa_v16': 'skygrid_qa_v16_1'}.get(model_version, 'skygrid_v09c_1')
     if checkpoint.get('format_version') != expected_format:
         raise ValueError('Unrecognized or mismatched SkyGrid checkpoint format')
+    if model_version == 'qa_v16':
+        from src.skygrid_ai.language.qa_v16 import dataset_fingerprint
+        current = dataset_fingerprint(
+            candidates=root / 'data/qa/candidates_v16.json',
+            reviews=root / 'data/qa/reviews_v16.json',
+            corpus=root / 'data/aviation/processed_v09b',
+            index_path=root / 'data/aviation/index_v10/passages.json.gz')
+        if checkpoint.get('qa_dataset_sha256') != current or checkpoint.get('evidence_selection') != 'question_only_live_extraction':
+            raise ValueError('QA v16 review, index or retrieval code changed')
+        original = root / 'checkpoints/v10/last.pt'
+        if not original.is_file() or sha256_file(original) != checkpoint.get('source_checkpoint_sha256'):
+            raise ValueError('Original v10 source checkpoint changed')
     if model_version == 'qa_v15':
         from src.skygrid_ai.language.qa_pilot import PROTOCOL, BENCHMARKS, digest_files
         if checkpoint.get('qa_protocol_sha256') != digest_files((PROTOCOL, *BENCHMARKS)):
@@ -103,7 +115,7 @@ def answer_with_model(index, question, *, corpus=CORPUS, top_k=8,
     continuation is never substituted for a missing citation-backed answer.
     """
     if model_version not in VALID_MODELS or checkpoint_name not in VALID_CHECKPOINTS:
-        raise ValueError('Choose model v09c/v10/qa_v15 and checkpoint best/last')
+        raise ValueError('Choose model v09c/v10/qa_v15/qa_v16 and checkpoint best/last')
     if (not 1 <= max_new_tokens <= 256 or not 0 < temperature <= 2.0 or
             not 1 <= top_k_tokens <= 768 or not isinstance(seed, int)):
         raise ValueError('Invalid sampling settings')
@@ -130,7 +142,11 @@ def answer_with_model(index, question, *, corpus=CORPUS, top_k=8,
     tokenizer, checkpoint = model_loader(
         model_version=model_version, checkpoint_name=checkpoint_name, root=root)
     context_size = checkpoint['model_config']['context_size']
-    prompt = make_prompt(question, evidence['answer'], tokenizer, context_size)
+    if model_version == 'qa_v16':
+        from src.skygrid_ai.language.qa_v16 import prompt_v16
+        prompt = prompt_v16(question, evidence['answer'], tokenizer, context_size)
+    else:
+        prompt = make_prompt(question, evidence['answer'], tokenizer, context_size)
     if generator is None:
         from src.skygrid_ai.language.generate_large import generate
         generator = generate

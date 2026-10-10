@@ -14,3 +14,5 @@ data/aviation/processed_v09_large/
 data/aviation/processed_v09b/
 data/aviation/tokenized_v09b/
 data/aviation/index_v10/
+data/qa/candidates_v16.json
+data/qa/reviews_v16.json

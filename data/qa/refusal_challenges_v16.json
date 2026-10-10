@@ -1,0 +1,8 @@
+[
+  {"id":"ref_mavlink_allocation","question":"How does MAVLink perform PX4 control allocation?","expected_gate":"refuse","note":"MAVLink and PX4 have different roles; source matching is not sufficient for entailment"},
+  {"id":"ref_unrelated","question":"What is the flight mode of the banana nebula quasar?","expected_gate":"refuse","note":"Out-of-domain question"},
+  {"id":"ref_heartbeat_guarantee","question":"Does MAVLink HEARTBEAT guarantee a collision-free flight?","expected_gate":"review","note":"May retrieve heartbeat but does not entail a flight safety guarantee"},
+  {"id":"ref_voltage","question":"What single battery voltage is safe for every UAV?","expected_gate":"review","note":"No universal value follows from general documentation"},
+  {"id":"positive_heartbeat","question":"What does MAVLink HEARTBEAT do?","expected_gate":"evidence","note":"Check relevance of extracted heartbeat source"},
+  {"id":"positive_px4_allocation","question":"How does PX4 handle control allocation?","expected_gate":"evidence","note":"Check relevance of extracted PX4 source"}
+]

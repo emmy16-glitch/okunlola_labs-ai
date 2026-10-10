@@ -21,7 +21,7 @@ def main():
     answer.add_argument('--top-k', type=int, default=8)
     neural = sub.add_parser('answer-neural', help='Show cited source excerpt AND an explicitly unverified local Transformer continuation')
     neural.add_argument('question')
-    neural.add_argument('--model', choices=('v09c', 'v10', 'qa_v15'), default='v09c')
+    neural.add_argument('--model', choices=('v09c', 'v10', 'qa_v15', 'qa_v16'), default='v09c')
     neural.add_argument('--checkpoint', choices=('last', 'best'), default='last')
     neural.add_argument('--tokens', type=int, default=64)
     neural.add_argument('--temperature', type=float, default=0.7)

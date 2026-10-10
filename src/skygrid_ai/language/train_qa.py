@@ -168,6 +168,8 @@ def main():
     parser.add_argument('--confirm-rights-reviewed', action='store_true')
     parser.add_argument('--confirm-qa-reviewed', action='store_true')
     args = parser.parse_args()
+    if not args.audit:
+        parser.error('The 24-example v15 training CLI is deprecated because validation overfit and answer-conditioned evidence selection were found. Use train_qa_v16 with independently reviewed examples. Existing checkpoints are preserved.')
     rows = prepare_examples()
     if args.audit:
         print(json.dumps({'status': 'candidate_qa_requires_human_review',
