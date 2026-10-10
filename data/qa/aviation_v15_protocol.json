@@ -1,0 +1,60 @@
+{
+  "version": "skygrid_qa_pilot_v1",
+  "review_status": "candidate_examples_require_human_factual_and_rights_review",
+  "purpose": "Small supervised QA pilot, NOT an independent aviation competence certificate",
+  "splits": {
+    "train": [
+      "mavlink_heartbeat",
+      "mavlink_mission",
+      "mavlink_parameter",
+      "mavlink_command",
+      "mavlink_signing",
+      "mavlink_serialization",
+      "px4_modes",
+      "px4_control_allocation",
+      "px4_telemetry",
+      "ind_timesync",
+      "ind_ftp",
+      "ind_ping",
+      "ind_joystick",
+      "ind_battery"
+    ],
+    "val": [
+      "ind_events",
+      "ind_offboard",
+      "ind_packet_loss"
+    ],
+    "test": [
+      "ind_routing",
+      "ind_sik_radio",
+      "ind_architecture"
+    ]
+  },
+  "unsupported": [
+    {
+      "id": "unsupported_train_mixing",
+      "split": "train",
+      "question": "Does MAVLink perform PX4 control allocation by itself?",
+      "answer": "I cannot verify that claim from the supplied documentation."
+    },
+    {
+      "id": "unsupported_train_voltage",
+      "split": "train",
+      "question": "What single battery voltage is safe for every UAV?",
+      "answer": "I cannot determine one safe voltage for every UAV from the supplied evidence."
+    },
+    {
+      "id": "unsupported_val_collision",
+      "split": "val",
+      "question": "Does receiving MAVLink HEARTBEAT guarantee a collision-free flight?",
+      "answer": "The supplied evidence does not establish that guarantee."
+    },
+    {
+      "id": "unsupported_test_weather",
+      "split": "test",
+      "question": "Are all drones safe to fly in any weather?",
+      "answer": "I cannot verify that from the available documentation."
+    }
+  ],
+  "additional_grounded": []
+}

@@ -10,7 +10,7 @@ from pathlib import Path
 from .grounded import answer_from_evidence
 from .retrieval import CORPUS, ROOT
 
-VALID_MODELS = {'v09c', 'v10'}
+VALID_MODELS = {'v09c', 'v10', 'qa_v15'}
 VALID_CHECKPOINTS = {'last', 'best'}
 
 
@@ -49,7 +49,7 @@ def load_local_model_assets(*, model_version='v09c', checkpoint_name='last',
                             root=ROOT):
     """Load only local, compatible SkyGrid checkpoints with safe torch.load."""
     if model_version not in VALID_MODELS or checkpoint_name not in VALID_CHECKPOINTS:
-        raise ValueError('Choose model v09c/v10 and checkpoint best/last')
+        raise ValueError('Choose model v09c/v10/qa_v15 and checkpoint best/last')
     import torch
     from src.skygrid_ai.language.large_bpe import LargeByteBPE
     from src.skygrid_ai.language.train_large_transformer import sha256_file
@@ -64,8 +64,21 @@ def load_local_model_assets(*, model_version='v09c', checkpoint_name='last',
         )
     tokenizer = LargeByteBPE.load(tokenizer_file)
     checkpoint = torch.load(ckpt_file, map_location='cpu', weights_only=True)
-    if checkpoint.get('format_version') != 'skygrid_v09c_1':
-        raise ValueError('Unrecognized SkyGrid checkpoint format')
+    expected_format = 'skygrid_qa_v15_1' if model_version == 'qa_v15' else 'skygrid_v09c_1'
+    if checkpoint.get('format_version') != expected_format:
+        raise ValueError('Unrecognized or mismatched SkyGrid checkpoint format')
+    if model_version == 'qa_v15':
+        from src.skygrid_ai.language.qa_pilot import PROTOCOL, BENCHMARKS, digest_files
+        if checkpoint.get('qa_protocol_sha256') != digest_files((PROTOCOL, *BENCHMARKS)):
+            raise ValueError('QA training dataset/protocol has changed')
+        original_folder = root / 'checkpoints' / 'v10'
+        expected_source = checkpoint.get('source_checkpoint_sha256')
+        if not isinstance(expected_source, str) or not any(
+            (original_folder / (name + '.pt')).is_file() and
+            sha256_file(original_folder / (name + '.pt')) == expected_source
+            for name in ('last', 'best')
+        ):
+            raise ValueError('Source v10 checkpoint fingerprint mismatch')
     if (checkpoint.get('vocab_size') != tokenizer.vocab_size or
             checkpoint.get('tokenizer_fingerprint') != tokenizer.fingerprint()):
         raise ValueError('Checkpoint tokenizer metadata mismatch')
@@ -90,7 +103,7 @@ def answer_with_model(index, question, *, corpus=CORPUS, top_k=8,
     continuation is never substituted for a missing citation-backed answer.
     """
     if model_version not in VALID_MODELS or checkpoint_name not in VALID_CHECKPOINTS:
-        raise ValueError('Choose model v09c/v10 and checkpoint best/last')
+        raise ValueError('Choose model v09c/v10/qa_v15 and checkpoint best/last')
     if (not 1 <= max_new_tokens <= 256 or not 0 < temperature <= 2.0 or
             not 1 <= top_k_tokens <= 768 or not isinstance(seed, int)):
         raise ValueError('Invalid sampling settings')
