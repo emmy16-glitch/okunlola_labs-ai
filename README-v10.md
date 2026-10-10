@@ -64,3 +64,31 @@ misses motivated this change, improvement on these same questions would be
 **development-set progress, not proof of generalization**. Evaluate new,
 independently written questions as well. No generated claims are fact-checked
 by this retrieval score.
+
+## v1.1: Extractive answer preview and an untuned retrieval question set
+
+After pulling the new code, **reuse your existing 10,034-passage index**:
+
+```bash
+python -m unittest discover -s tests -v
+python -m src.skygrid_ai.knowledge.cli answer "What does MAVLink HEARTBEAT do?"
+python -m src.skygrid_ai.knowledge.cli answer "How does PX4 handle control allocation?"
+python -m src.skygrid_ai.knowledge.cli answer "How does MAVLink handle control allocation?"
+python -m src.skygrid_ai.knowledge.cli benchmark-independent
+```
+
+The `answer` command **extracts a sentence verbatim** from an indexed source
+and includes its pinned GitHub citation. It **does not** synthesize a
+Transformer answer, imply source facts are correct, or offer flight instructions.
+If a question names one software system but the strongest matching evidence
+comes from another system, it refuses to silently conflate their roles.
+Extractive selection is based on word overlap, so outputs may be awkward,
+incomplete, or off-topic; compare the excerpt with the linked documentation.
+
+`benchmark-independent` tests 11 additional source-specific questions that
+were not used in the earlier nine-question ranking adjustment. It only
+measures expected-source recall@5 and literal reference-term presence, **not**
+correct answer quality. These new questions were authored after the ranking
+change; avoid repeatedly tuning the retrieval ranker against them.
+
+No model weights, tokenizers, local datasets, or indexes are overwritten.
