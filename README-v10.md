@@ -92,3 +92,34 @@ correct answer quality. These new questions were authored after the ranking
 change; avoid repeatedly tuning the retrieval ranker against them.
 
 No model weights, tokenizers, local datasets, or indexes are overwritten.
+
+## v1.0.2 — source-complete extractive answer repair
+
+The `answer` command now opens the ORIGINAL audited document in
+`data/aviation/processed_v09b/docs/` after document retrieval. This prevents
+the old behavior where a 125-word flattened passage ended midway through a
+sentence, or a heading was incorrectly presented as the answer. The command
+requires the cleaned source fingerprint to match the pinned manifest before
+emitting a citation-backed excerpt. Headings, tables, incomplete sentences,
+and irrelevant passages are filtered; if evidence is insufficient it abstains.
+
+The command chooses one explanatory sentence from the source; it is NOT neural
+text generation or independently verified factual accuracy. The sentence may
+have inline Markdown markers removed for readability. Provenance is the
+document URL, not a claimed passage offset.
+
+No index rebuild, retokenization, or training is necessary:
+
+```bash
+git pull origin main
+python -m unittest discover -s tests -v
+python -m src.skygrid_ai.knowledge.cli answer "What does MAVLink HEARTBEAT do?"
+python -m src.skygrid_ai.knowledge.cli answer "How does PX4 handle control allocation?"
+```
+
+The original nine-question retrieval development benchmark remains 9/9.
+The later eleven-question suite was 10/11 (90.9% recall@5); the missing
+MAVLink PING source was noted, but this change intentionally does not tune
+search ranking to that additional evaluation set. Neither score measures
+answer correctness. Do not repeatedly tune evaluation questions into an
+illusory held-out benchmark. Existing source-rights review requirements apply.

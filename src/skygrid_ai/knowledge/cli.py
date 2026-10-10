@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .benchmark import evaluate_candidate_answers, evaluate_retrieval, load_questions
 from .grounded import answer_from_evidence
-from .retrieval import INDEX, build_passages, load_index, save_index
+from .retrieval import CORPUS, INDEX, build_passages, load_index, save_index
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
         if args.command == 'ask':
             result = index.evidence(args.question, limit=args.top_k)
         elif args.command == 'answer':
-            result = answer_from_evidence(index, args.question, top_k=args.top_k)
+            result = answer_from_evidence(index, args.question, top_k=args.top_k, corpus=CORPUS)
         elif args.command == 'benchmark-independent':
             benchmark_path = Path(__file__).resolve().parents[3] / 'data' / 'benchmarks' / 'aviation_v11_independent.json'
             result = evaluate_retrieval(index, load_questions(benchmark_path), top_k=args.top_k)
